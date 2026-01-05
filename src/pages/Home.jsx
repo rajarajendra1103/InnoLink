@@ -5,7 +5,7 @@ import {
     Lightbulb, AlertCircle, Rocket, Link2, Bell, RefreshCw, Trash, Edit, BarChart2, Check, X, Send
 } from 'lucide-react';
 import { db } from '../firebase';
-import { collection, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc, increment, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, orderBy, onSnapshot, doc, updateDoc, deleteDoc, increment, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
 import { toggleLike, addComment } from '../services/firebaseService';
 
