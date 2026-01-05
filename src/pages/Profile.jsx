@@ -38,43 +38,66 @@ const Profile = () => {
     });
 
     useEffect(() => {
-        if (!currentUser || !userProfile) return;
+        console.log("Profile component mounted. User:", currentUser?.uid);
 
-        setProfileData({
-            fullName: userProfile.fullName || '',
-            username: userProfile.username || '',
-            email: currentUser.email || '',
-            tagline: userProfile.tagline || '',
-            about: userProfile.about || '',
-            skills: userProfile.skills || '',
-            city: userProfile.location?.city || '',
-            country: userProfile.location?.country || '',
-            role: userProfile.role || 'Innovator'
-        });
+        if (!currentUser) return;
 
-        const fetchData = async () => {
-            setLoading(true);
-            try {
-                const collections = ['problems', 'ideas', 'solutions', 'ideaRegistrations'];
-                const results = await Promise.all(collections.map(col => {
-                    const q = query(collection(db, col), where('authorId', '==', currentUser.uid), orderBy('createdAt', 'desc'));
-                    return getDocs(q);
-                }));
-
-                setUserItems({
-                    problems: results[0].docs.map(d => ({ id: d.id, ...d.data() })),
-                    ideas: results[1].docs.map(d => ({ id: d.id, ...d.data() })),
-                    solutions: results[2].docs.map(d => ({ id: d.id, ...d.data() })),
-                    registrations: results[3].docs.map(d => ({ id: d.id, ...d.data() }))
-                });
-            } catch (err) {
-                console.error("Error fetching user data:", err);
-            }
-            setLoading(false);
-        };
-
-        fetchData();
+        if (userProfile) {
+            setProfileData({
+                fullName: userProfile.fullName || '',
+                username: userProfile.username || '',
+                email: currentUser.email || '',
+                tagline: userProfile.tagline || '',
+                about: userProfile.about || '',
+                skills: userProfile.skills || '',
+                city: userProfile.location?.city || '',
+                country: userProfile.location?.country || '',
+                role: userProfile.role || 'Innovator'
+            });
+            fetchData();
+        }
     }, [currentUser, userProfile]);
+
+    const fetchData = async () => {
+        if (!currentUser) return;
+        setLoading(true);
+        console.log("Fetching data for profile...");
+        try {
+            const collections = ['problems', 'ideas', 'solutions', 'ideaRegistrations'];
+            const results = await Promise.all(collections.map(async (col) => {
+                try {
+                    const q = query(collection(db, col), where('authorId', '==', currentUser.uid), orderBy('createdAt', 'desc'));
+                    return await getDocs(q);
+                } catch (colErr) {
+                    console.error(`Error fetching collection ${col}:`, colErr);
+                    return { docs: [] }; // Fallback to empty docs
+                }
+            }));
+
+            setUserItems({
+                problems: (results[0]?.docs || []).map(d => ({ id: d.id, ...d.data(), type: 'Problem' })),
+                ideas: (results[1]?.docs || []).map(d => ({ id: d.id, ...d.data(), type: 'Idea' })),
+                solutions: (results[2]?.docs || []).map(d => ({ id: d.id, ...d.data(), type: 'Solution' })),
+                registrations: (results[3]?.docs || []).map(d => ({ id: d.id, ...d.data() }))
+            });
+        } catch (err) {
+            console.error("Critical error in fetchData:", err);
+        }
+        setLoading(false);
+    };
+
+    if (!currentUser) {
+        return (
+            <div className="container mx-auto px-4 py-12 text-center">
+                <div className="glass-panel p-10 max-w-md mx-auto">
+                    <Shield size={64} className="text-slate-200 mx-auto mb-4" />
+                    <h2 className="text-2xl font-bold text-slate-800 mb-4">Identity Required</h2>
+                    <p className="text-slate-600 mb-6">Please sign in to view and manage your professional profile.</p>
+                    <Link to="/login" className="btn-primary inline-block px-10">Sign In</Link>
+                </div>
+            </div>
+        );
+    }
 
     const handleSaveProfile = async () => {
         try {
@@ -247,8 +270,8 @@ const Profile = () => {
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
                             className={`pb-3 text-sm font-semibold whitespace-nowrap transition-all flex items-center gap-2 px-1 ${activeTab === tab.id
-                                    ? 'text-indigo-600 border-b-2 border-indigo-600'
-                                    : 'text-slate-500 hover:text-slate-800'
+                                ? 'text-indigo-600 border-b-2 border-indigo-600'
+                                : 'text-slate-500 hover:text-slate-800'
                                 }`}
                         >
                             {tab.icon} {tab.label}
