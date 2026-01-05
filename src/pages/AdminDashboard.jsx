@@ -3,7 +3,7 @@ import {
     Users, AlertTriangle, BarChart, Shield, Search,
     MoreVertical, CheckCircle, XCircle, Eye, Trash2,
     TrendingUp, MessageSquare, Rocket, AlertCircle,
-    UserX, UserCheck, ShieldCheck, History, Info, Lightbulb
+    UserX, UserCheck, ShieldCheck, History, Info, Lightbulb, Database
 } from 'lucide-react';
 import { db } from '../firebase';
 import {
@@ -12,10 +12,12 @@ import {
     serverTimestamp, limit
 } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
+import { seedDatabase } from '../utils/seedData';
 
 const AdminDashboard = () => {
     const { userProfile, currentUser } = useAuth();
     const [activeTab, setActiveTab] = useState('overview'); // overview, moderation, users, logs
+    const [isSeeding, setIsSeeding] = useState(false);
     const [stats, setStats] = useState({
         totalUsers: 0,
         activeUsers: 0,
@@ -82,6 +84,21 @@ const AdminDashboard = () => {
     }, [userProfile]);
 
     // --- ADMIN ACTIONS ---
+
+    const handleSeed = async () => {
+        if (isSeeding) return;
+        setIsSeeding(true);
+        try {
+            const result = await seedDatabase();
+            if (result === 'Success') {
+                alert("Demo data successfully seeded to Firestore!");
+                await logAction('SEED_DATABASE', { status: 'success' });
+            }
+        } catch (err) {
+            alert("Seeding failed: " + err.message);
+        }
+        setIsSeeding(false);
+    };
 
     const logAction = async (action, details) => {
         try {
@@ -161,9 +178,19 @@ const AdminDashboard = () => {
                     <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Admin Command Center</h1>
                     <p className="text-slate-500">Platform intelligence, governance, and safety controls.</p>
                 </div>
-                <div className="bg-indigo-600 px-4 py-2 rounded-xl text-white shadow-lg flex items-center gap-2">
-                    <ShieldCheck size={20} />
-                    <span className="font-bold text-sm">Authenticated System Administrator</span>
+                <div className="flex flex-wrap gap-2">
+                    <button
+                        onClick={handleSeed}
+                        disabled={isSeeding}
+                        className="bg-white border border-slate-200 px-4 py-2 rounded-xl text-slate-700 shadow-sm hover:bg-slate-50 transition-all flex items-center gap-2 text-sm font-bold"
+                    >
+                        <Database size={18} className="text-indigo-600" />
+                        {isSeeding ? 'Seeding...' : 'Seed Demo Data'}
+                    </button>
+                    <div className="bg-indigo-600 px-4 py-2 rounded-xl text-white shadow-lg flex items-center gap-2">
+                        <ShieldCheck size={20} />
+                        <span className="font-bold text-sm">Authenticated System Administrator</span>
+                    </div>
                 </div>
             </header>
 
@@ -287,8 +314,8 @@ const AdminDashboard = () => {
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <span className={`px-3 py-1 rounded-lg text-xs font-black tracking-wider uppercase border ${user.role === 'Admin' ? 'bg-purple-50 text-purple-700 border-purple-100' :
-                                                        user.role === 'Investor' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
-                                                            'bg-indigo-50 text-indigo-700 border-indigo-100'
+                                                    user.role === 'Investor' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                                                        'bg-indigo-50 text-indigo-700 border-indigo-100'
                                                     }`}>
                                                     {user.role}
                                                 </span>
@@ -350,8 +377,8 @@ const AdminDashboard = () => {
                                             <span className="text-xs font-black uppercase tracking-widest text-slate-700">{v.contentType} VIOLATION</span>
                                         </div>
                                         <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase border ${v.status === 'Pending' ? 'bg-red-100 border-red-200 text-red-700' :
-                                                v.status === 'Approved' ? 'bg-emerald-100 border-emerald-200 text-emerald-700' :
-                                                    'bg-slate-200 border-slate-300 text-slate-600'
+                                            v.status === 'Approved' ? 'bg-emerald-100 border-emerald-200 text-emerald-700' :
+                                                'bg-slate-200 border-slate-300 text-slate-600'
                                             }`}>
                                             {v.status}
                                         </span>
@@ -463,8 +490,8 @@ const TabButton = ({ active, onClick, label, icon }) => (
     <button
         onClick={onClick}
         className={`flex items-center gap-3 py-4 px-6 border-b-4 transition-all whitespace-nowrap ${active
-                ? 'border-indigo-600 text-indigo-700 font-black'
-                : 'border-transparent text-slate-400 hover:text-slate-600 font-bold'
+            ? 'border-indigo-600 text-indigo-700 font-black'
+            : 'border-transparent text-slate-400 hover:text-slate-600 font-bold'
             }`}
     >
         {icon}
