@@ -13,6 +13,7 @@ import RegisterIdea from './pages/RegisterIdea';
 import Login from './pages/Auth/Login';
 import Signup from './pages/Auth/Signup';
 import AdminDashboard from './pages/AdminDashboard';
+import Profile from './pages/Profile';
 
 function App() {
   return (
