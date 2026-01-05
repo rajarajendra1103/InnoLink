@@ -5,7 +5,7 @@ import {
     MapPin, Mail, Globe, Eye, EyeOff, Shield,
     Linkedin, Github, Link as LinkIcon, ExternalLink,
     Award, TrendingUp, AlertTriangle, CheckCircle, Tag,
-    Building, DollarSign, BarChart2, PieChart, Users, ChevronDown, Rocket
+    Building, DollarSign, BarChart2, PieChart, Users, ChevronDown, Rocket, Lightbulb
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
