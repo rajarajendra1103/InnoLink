@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import {
-    ThumbsUp, MessageSquare, MoreHorizontal,
-    Lightbulb, AlertCircle, Rocket, Link2, Bell, RefreshCw, Trash, Edit, BarChart2, Check, X, Send
+    Copy, Bookmark, Flag, Image, MoreVertical, EyeOff, Ban
 } from 'lucide-react';
 import { db } from '../firebase';
 import { collection, query, where, orderBy, onSnapshot, doc, updateDoc, deleteDoc, increment, addDoc, serverTimestamp } from 'firebase/firestore';
@@ -11,6 +10,7 @@ import { toggleLike, addComment } from '../services/firebaseService';
 
 const Home = () => {
     const { currentUser, userProfile } = useAuth();
+    const navigate = useNavigate();
     const [feedItems, setFeedItems] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -128,6 +128,39 @@ const Home = () => {
         alert("Poll attached!");
     };
 
+    const handleCopyLink = (postId) => {
+        const url = `${window.location.origin}/post/${postId}`;
+        navigator.clipboard.writeText(url);
+        alert("Link copied to clipboard!");
+        setActiveMenu(null);
+    };
+
+    const handleSavePost = (postId) => {
+        // Mock save functionality
+        alert("Post saved to your bookmarks!");
+        setActiveMenu(null);
+    };
+
+    const handleReport = (postId) => {
+        if (window.confirm("Do you want to report this post for violating community standards?")) {
+            alert("Thank you. Our team will review this content.");
+        }
+        setActiveMenu(null);
+    };
+
+    const handleHidePost = (postId) => {
+        setFeedItems(prev => prev.filter(p => p.id !== postId));
+        setActiveMenu(null);
+    };
+
+    const handleBlockUser = (author) => {
+        if (window.confirm(`Block all content from ${author}?`)) {
+            setFeedItems(prev => prev.filter(p => p.author !== author));
+            alert(`${author} has been blocked.`);
+        }
+        setActiveMenu(null);
+    };
+
     const toggleComments = (id) => {
         setExpandedComments(prev => ({ ...prev, [id]: !prev[id] }));
     };
@@ -179,6 +212,50 @@ const Home = () => {
 
                 {/* Main Feed Column */}
                 <div className="lg:col-span-3">
+                    {/* Quick Post Card */}
+                    {currentUser && (
+                        <div className="glass-panel p-5 mb-6 bg-white/80 backdrop-blur-md border-indigo-50 shadow-sm hover:shadow-md transition-all">
+                            <div className="flex gap-4">
+                                <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex-shrink-0 flex items-center justify-center font-bold text-white shadow-inner">
+                                    {currentUser.email?.charAt(0).toUpperCase()}
+                                </div>
+                                <button
+                                    onClick={() => navigate('/post')}
+                                    className="flex-1 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-full px-5 text-left text-slate-500 text-sm font-medium transition-colors"
+                                >
+                                    Share an innovative idea or report a problem...
+                                </button>
+                            </div>
+                            <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-100">
+                                <div className="flex gap-1">
+                                    <button onClick={() => navigate('/post')} className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-indigo-50 text-indigo-600 transition-colors">
+                                        <Lightbulb size={18} />
+                                        <span className="text-xs font-semibold">Idea</span>
+                                    </button>
+                                    <button onClick={() => navigate('/post')} className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-red-50 text-red-600 transition-colors">
+                                        <AlertCircle size={18} />
+                                        <span className="text-xs font-semibold">Problem</span>
+                                    </button>
+                                    <button onClick={() => navigate('/post')} className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-emerald-50 text-emerald-600 transition-colors">
+                                        <Rocket size={18} />
+                                        <span className="text-xs font-semibold">Solution</span>
+                                    </button>
+                                </div>
+                                <div className="flex gap-2">
+                                    <button onClick={() => navigate('/post')} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-slate-50 rounded-full transition-all" title="Add Image">
+                                        <Image size={20} />
+                                    </button>
+                                    <button onClick={() => navigate('/post')} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-slate-50 rounded-full transition-all" title="Attach Files">
+                                        <Link2 size={20} />
+                                    </button>
+                                    <button onClick={() => navigate('/post')} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-slate-50 rounded-full transition-all" title="Create Poll">
+                                        <BarChart2 size={20} />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Notification Banner */}
                     <div className="rounded-2xl shadow-sm border overflow-hidden p-4 mb-6 flex items-center gap-3 bg-emerald-50 border-emerald-200">
                         <Bell size={20} className="text-emerald-600" />
@@ -196,7 +273,7 @@ const Home = () => {
                             </div>
                         )}
                         {feedItems.map(item => (
-                            <div key={item.id} className="glass-panel overflow-hidden">
+                            <div key={item.id} className="glass-panel">
 
                                 {/* Header & Content */}
                                 <div className="p-6 border-b border-slate-200">
@@ -234,9 +311,38 @@ const Home = () => {
                                                         <span className="text-xs text-slate-500">{item.role} • {item.createdAt?.seconds ? new Date(item.createdAt.seconds * 1000).toLocaleDateString() : 'Just now'}</span>
                                                     </div>
                                                 </div>
-                                                <span className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 ${getBadgeColor(item.type)}`}>
-                                                    {getIcon(item.type)} {item.type.toUpperCase()}
-                                                </span>
+                                                <div className="flex items-center gap-3">
+                                                    <span className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 ${getBadgeColor(item.type)}`}>
+                                                        {getIcon(item.type)} {item.type.toUpperCase()}
+                                                    </span>
+
+                                                    <div className="relative">
+                                                        <button className="text-slate-400 hover:text-indigo-600 p-1.5 rounded-full hover:bg-indigo-50 transition-all" onClick={(e) => { e.stopPropagation(); toggleMenu(item.id); }}>
+                                                            <MoreVertical size={20} />
+                                                        </button>
+                                                        {activeMenu === item.id && (
+                                                            <div className="absolute right-0 top-full mt-2 bg-white border border-slate-200 rounded-2xl shadow-2xl w-56 z-[100] overflow-hidden animate-in fade-in zoom-in-95 duration-100" onClick={(e) => e.stopPropagation()}>
+                                                                <div className="p-2 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+                                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2">Post Options</span>
+                                                                </div>
+                                                                <div className="py-1">
+                                                                    {(currentUser?.uid === item.authorId || userProfile?.role === 'Admin') && (
+                                                                        <>
+                                                                            <div onClick={() => startEdit(item)} className="px-4 py-2.5 text-sm flex items-center gap-3 cursor-pointer hover:bg-indigo-50 text-slate-700 font-medium transition-colors"><Edit size={16} className="text-indigo-500" /> Edit Post</div>
+                                                                            <div onClick={() => startPoll(item.id)} className="px-4 py-2.5 text-sm flex items-center gap-3 cursor-pointer hover:bg-indigo-50 text-slate-700 font-medium transition-colors"><BarChart2 size={16} className="text-indigo-500" /> Attached Poll</div>
+                                                                            <div onClick={() => handleDelete(item.id, item.type)} className="px-4 py-2.5 text-sm flex items-center gap-3 cursor-pointer hover:bg-red-50 text-red-600 font-medium transition-colors border-b border-slate-100"><Trash size={16} /> Delete Forever</div>
+                                                                        </>
+                                                                    )}
+                                                                    <div onClick={() => handleCopyLink(item.id)} className="px-4 py-2.5 text-sm flex items-center gap-3 cursor-pointer hover:bg-slate-50 text-slate-700 font-medium transition-colors"><Copy size={16} className="text-slate-400" /> Copy Post Link</div>
+                                                                    <div onClick={() => handleSavePost(item.id)} className="px-4 py-2.5 text-sm flex items-center gap-3 cursor-pointer hover:bg-slate-50 text-slate-700 font-medium transition-colors"><Bookmark size={16} className="text-slate-400" /> Bookmark Post</div>
+                                                                    <div onClick={() => handleHidePost(item.id)} className="px-4 py-2.5 text-sm flex items-center gap-3 cursor-pointer hover:bg-slate-50 text-slate-700 font-medium transition-colors"><EyeOff size={16} className="text-slate-400" /> Hide this post</div>
+                                                                    <div onClick={() => handleBlockUser(item.author)} className="px-4 py-2.5 text-sm flex items-center gap-3 cursor-pointer hover:bg-slate-50 text-slate-700 font-medium transition-colors border-t border-slate-100"><Ban size={16} className="text-slate-400" /> Block {item.author?.split(' ')[0]}</div>
+                                                                    <div onClick={() => handleReport(item.id)} className="px-4 py-2.5 text-sm flex items-center gap-3 cursor-pointer hover:bg-red-50 text-red-500 font-medium transition-colors mt-1"><Flag size={16} /> Report Content</div>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
                                             </div>
                                             <h3 className="text-xl font-bold mb-3 text-slate-900 leading-tight">{item.title}</h3>
                                             <p className="text-slate-600 text-sm leading-relaxed">{item.summary || item.description}</p>
@@ -278,18 +384,6 @@ const Home = () => {
                                     <div className="flex items-center gap-3">
                                         {item.type === 'Problem' && (<Link to={`/poll/${item.id}`} className="btn-primary text-xs py-1.5 px-3">View Poll</Link>)}
                                         {item.type === 'Idea' && <button className="btn-secondary text-xs py-1.5 px-3">View Context</button>}
-                                        {(currentUser?.uid === item.authorId || userProfile?.role === 'Admin') && (
-                                            <div className="relative">
-                                                <button className="text-slate-400 hover:text-slate-600 p-1" onClick={(e) => { e.stopPropagation(); toggleMenu(item.id); }}><MoreHorizontal size={20} /></button>
-                                                {activeMenu === item.id && (
-                                                    <div className="absolute right-0 bottom-full mb-2 bg-white border border-slate-200 rounded-xl shadow-xl w-40 z-50 overflow-hidden" onClick={(e) => e.stopPropagation()}>
-                                                        <div onClick={() => startEdit(item)} className="px-4 py-2 text-sm flex items-center gap-2 cursor-pointer hover:bg-slate-50 text-slate-700"><Edit size={14} /> Edit Post</div>
-                                                        <div onClick={() => startPoll(item.id)} className="px-4 py-2 text-sm flex items-center gap-2 cursor-pointer hover:bg-slate-50 text-slate-700"><BarChart2 size={14} /> Set Poll</div>
-                                                        <div onClick={() => handleDelete(item.id, item.type)} className="px-4 py-2 text-sm flex items-center gap-2 cursor-pointer hover:bg-red-50 text-red-600"><Trash size={14} /> Delete</div>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
 

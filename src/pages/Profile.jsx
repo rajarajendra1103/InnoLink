@@ -5,7 +5,7 @@ import {
     MapPin, Mail, Globe, Eye, EyeOff, Shield,
     Linkedin, Github, Link as LinkIcon, ExternalLink,
     Award, TrendingUp, AlertTriangle, CheckCircle, Tag,
-    Building, DollarSign, BarChart2, PieChart, Users, ChevronDown, Rocket, Lightbulb
+    Building, DollarSign, BarChart2, PieChart, Users, ChevronDown, Rocket, Lightbulb, MoreHorizontal, Edit, Trash, Copy, Bookmark
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -36,6 +36,30 @@ const Profile = () => {
         problems: [],
         registrations: []
     });
+
+    const [activeMenu, setActiveMenu] = useState(null);
+
+    const toggleMenu = (id) => { setActiveMenu(activeMenu === id ? null : id); };
+
+    const handleCopyLink = (postId) => {
+        const url = `${window.location.origin}/post/${postId}`;
+        navigator.clipboard.writeText(url);
+        alert("Link copied to clipboard!");
+        setActiveMenu(null);
+    };
+
+    const handleSavePost = (postId) => {
+        alert("Post saved to your bookmarks!");
+        setActiveMenu(null);
+    };
+
+    const handleDelete = async (id, type) => {
+        if (window.confirm("Are you sure you want to delete this?")) {
+            // Mock delete for now as it's user profile view
+            alert("Delete requested. This would remove the document from Firebase.");
+            setActiveMenu(null);
+        }
+    };
 
     useEffect(() => {
         console.log("Profile component mounted. User:", currentUser?.uid);
@@ -341,10 +365,23 @@ const Profile = () => {
                             {activeTab === 'ideas' && (
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                     {userItems.ideas.map(idea => (
-                                        <div key={idea.id} className="glass-panel p-6 hover:shadow-md transition-shadow">
+                                        <div key={idea.id} className="glass-panel p-6 hover:shadow-md transition-shadow relative">
                                             <div className="flex justify-between mb-4">
                                                 <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded uppercase tracking-wider">IDEA</span>
-                                                {idea.status === 'published' ? <Globe size={14} className="text-green-500" /> : <Lock size={14} className="text-amber-500" />}
+                                                <div className="flex items-center gap-2">
+                                                    {idea.status === 'published' ? <Globe size={14} className="text-green-500" /> : <Lock size={14} className="text-amber-500" />}
+                                                    <div className="relative">
+                                                        <button className="text-slate-400 hover:text-slate-600 p-1" onClick={(e) => { e.stopPropagation(); toggleMenu(idea.id); }}><MoreHorizontal size={18} /></button>
+                                                        {activeMenu === idea.id && (
+                                                            <div className="absolute right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl w-40 z-50 overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                                                                <div onClick={() => alert("Edit mode...")} className="px-4 py-2 text-sm flex items-center gap-2 cursor-pointer hover:bg-slate-50 text-slate-700"><Edit size={14} /> Edit</div>
+                                                                <div onClick={() => handleCopyLink(idea.id)} className="px-4 py-2 text-sm flex items-center gap-2 cursor-pointer hover:bg-slate-50 text-slate-700"><Copy size={14} /> Copy Link</div>
+                                                                <div onClick={() => handleSavePost(idea.id)} className="px-4 py-2 text-sm flex items-center gap-2 cursor-pointer hover:bg-slate-50 text-slate-700"><Bookmark size={14} /> Save</div>
+                                                                <div onClick={() => handleDelete(idea.id, 'idea')} className="px-4 py-2 text-sm flex items-center gap-2 cursor-pointer hover:bg-red-50 text-red-600"><Trash size={14} /> Delete</div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
                                             </div>
                                             <h4 className="font-bold text-slate-800 mb-2 truncate">{idea.title}</h4>
                                             <p className="text-sm text-slate-500 line-clamp-2 mb-4">{idea.description}</p>
