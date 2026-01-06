@@ -22,7 +22,7 @@ const SearchProblems = () => {
                     <h1 className="text-3xl font-bold mb-2 text-slate-900">Find Problems to Solve</h1>
                     <p className="text-slate-500">Perfect for hackathons and innovators looking for challenges.</p>
                 </div>
-                <button className="btn-primary">Post a Problem</button>
+
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8">

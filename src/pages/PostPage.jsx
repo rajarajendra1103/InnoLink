@@ -105,7 +105,7 @@ const PostPage = () => {
             navigate('/');
         } catch (error) {
             console.error("Error creating post:", error);
-            alert("Failed to create post. Please try again.");
+            alert("Error creating post: " + (error.message || "Unknown error"));
         } finally {
             setLoading(false);
         }

@@ -62,3 +62,23 @@ Follow these steps to connect your app to a real database and deploy it to the w
    ```
 
 You will get a `Hosting URL` (e.g., `https://innolink-app.web.app`). That is your live website!
+
+## Phase 7: Troubleshooting CORS (If Uploads Fail)
+If you see errors like `blocked by CORS policy` when uploading images:
+1. Ensure you have the [Google Cloud SDK (gcloud)](https://cloud.google.com/sdk/docs/install) installed.
+2. A file named `storage_cors.json` has been created in your project root.
+3. Run the following command in your terminal:
+   ```bash
+   gsutil cors set storage_cors.json gs://innolink-db320.firebasestorage.app
+   ```
+   *(Replace the bucket name `gs://...` with your actual bucket name from Phase 5 if it's different)*
+
+### 💡 Alternative: No-Install Fix (Cloud Shell)
+If you don't want to install the Google Cloud SDK locally:
+1. Go to [Google Cloud Console](https://console.cloud.google.com/).
+2. Click the **Activate Cloud Shell** icon (terminal icon) in the top right.
+3. Once the terminal opens, paste this exact command (it creates the file and sets the CORS in one go):
+   ```bash
+   echo '[{"origin": ["*"], "method": ["GET", "POST", "PUT", "DELETE", "HEAD"], "responseHeader": ["Content-Type"], "maxAgeSeconds": 3600}]' > cors.json && gsutil cors set cors.json gs://innolink-db320.firebasestorage.app
+   ```
+4. Try posting again!
